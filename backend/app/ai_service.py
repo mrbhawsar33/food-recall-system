@@ -1,4 +1,11 @@
-import ollama
+import os
+import httpx
+from dotenv import load_dotenv
+
+load_dotenv()
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent"
 
 def generate_summary(title: str, recall_class: str) -> str:
     severity = {
@@ -14,9 +21,17 @@ Severity: {severity}
 
 Write only the 2-sentence summary, nothing else."""
 
-    response = ollama.chat(
-        model="llama3.2",
-        messages=[{"role": "user", "content": prompt}]
-    )
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}]
+    }
 
-    return response["message"]["content"]
+    try:
+        response = httpx.post(
+            f"{GEMINI_URL}?key={GEMINI_API_KEY}",
+            json=payload,
+            timeout=15
+        )
+        result = response.json()
+        return result["candidates"][0]["content"]["parts"][0]["text"].strip()
+    except Exception as e:
+        return f"This is a {recall_class} recall for {title}. Please follow instructions from the recall notice."

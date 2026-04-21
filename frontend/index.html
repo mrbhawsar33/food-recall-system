@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Canadian Food Recall Alerts</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f7f7f7;
+      color: #1a1a1a;
+    }
+
+    header {
+      background: #cc0000;
+      color: white;
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    header h1 { font-size: 1.4rem; font-weight: 700; }
+    header p { font-size: 0.85rem; opacity: 0.85; }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 30px 20px; }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 40px; }
+
+    @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 28px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+
+    .card h2 { font-size: 1.1rem; margin-bottom: 18px; color: #cc0000; }
+
+    input[type="email"] {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      margin-bottom: 14px;
+    }
+
+    .categories-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .cat-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.88rem;
+      cursor: pointer;
+    }
+
+    .cat-count {
+      margin-left: auto;
+      background: #f0f0f0;
+      border-radius: 10px;
+      padding: 1px 8px;
+      font-size: 0.78rem;
+      color: #555;
+    }
+
+    .cat-count.active { background: #fff0f0; color: #cc0000; font-weight: 600; }
+
+    button {
+      background: #cc0000;
+      color: white;
+      border: none;
+      padding: 11px 22px;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      width: 100%;
+      font-weight: 600;
+    }
+
+    button:hover { background: #aa0000; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+
+    .msg { margin-top: 12px; font-size: 0.88rem; padding: 10px; border-radius: 6px; }
+    .msg.success { background: #e6f4ea; color: #2d6a3f; }
+    .msg.error { background: #fdecea; color: #b00020; }
+
+    /* email preview */
+    .preview-card {
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 16px;
+      font-size: 0.85rem;
+      background: #fafafa;
+    }
+
+    .preview-card .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .badge.high { background: #fdecea; color: #b00020; }
+    .badge.medium { background: #fff3e0; color: #e65100; }
+    .badge.low { background: #e8f5e9; color: #2e7d32; }
+
+    .preview-card h4 { font-size: 0.9rem; margin-bottom: 6px; }
+    .preview-card p { color: #555; line-height: 1.5; }
+    .anomaly { color: #cc0000; font-weight: 600; font-size: 0.82rem; margin-top: 6px; }
+
+    /* dashboard */
+    .filters {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .filters input, .filters select {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      flex: 1;
+      min-width: 140px;
+    }
+
+    .filters button {
+      width: auto;
+      padding: 8px 18px;
+      font-size: 0.88rem;
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    th { background: #f0f0f0; padding: 10px 12px; text-align: left; font-weight: 600; }
+    td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+    tr:hover td { background: #fafafa; }
+
+    .severity-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .severity-badge.HIGH { background: #fdecea; color: #b00020; }
+    .severity-badge.MEDIUM { background: #fff3e0; color: #e65100; }
+    .severity-badge.LOW { background: #e8f5e9; color: #2e7d32; }
+    .severity-badge.UNKNOWN { background: #f0f0f0; color: #555; }
+
+    .repeat-flag { color: #cc0000; font-size: 0.78rem; font-weight: 600; }
+
+    .summary-text { color: #555; font-size: 0.82rem; margin-top: 4px; line-height: 1.4; }
+
+    .section-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: #1a1a1a;
+    }
+
+    .loading { text-align: center; padding: 40px; color: #999; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>🍁 Canadian Food Recall Alerts</h1>
+    <p>Real-time CFIA food recall notifications powered by Health Canada Open Data</p>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="grid">
+
+    <!-- Subscription Form -->
+    <div class="card">
+      <h2>📬 Subscribe to Alerts</h2>
+      <input type="email" id="sub-email" placeholder="your@email.com" />
+
+      <p style="font-size:0.85rem; margin-bottom:10px; color:#555;">
+        Select categories you care about:
+      </p>
+
+      <div class="categories-grid" id="categories-grid">
+        <p style="font-size:0.85rem;color:#999;">Loading categories...</p>
+      </div>
+
+      <p style="font-size:0.78rem; color:#888; margin-bottom:14px;">
+        Class 1 recalls sent immediately. Class 2 &amp; 3 batched into daily digest.
+      </p>
+
+      <button id="subscribe-btn" onclick="subscribe()">Subscribe</button>
+      <div id="sub-msg"></div>
+    </div>
+
+    <!-- Email Preview -->
+    <div class="card">
+      <h2>👁 Email Preview</h2>
+      <p style="font-size:0.83rem;color:#777;margin-bottom:14px;">
+        This is what a recall alert email looks like:
+      </p>
+      <div class="preview-card">
+        <span class="badge high">CLASS 1 — HIGH RISK</span>
+        <h4>Auricchio brand Gorgonzola D.O.P. Piccante recalled due to Listeria monocytogenes</h4>
+        <p><strong>Issue:</strong> Listeria &nbsp;|&nbsp; <strong>Category:</strong> Dairy</p>
+        <p class="summary-text">
+          The Auricchio brand Gorgonzola has been recalled due to Listeria monocytogenes,
+          a bacteria that can cause serious illness. If you have this product, do not consume
+          it and contact your local health authority.
+        </p>
+        <p class="anomaly">⚠ This product has been recalled twice in the last 30 days</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Dashboard -->
+  <div class="card">
+    <p class="section-title">📋 Recall Dashboard</p>
+
+    <div class="filters">
+      <input type="text" id="search-input" placeholder="Search by keyword..." />
+      <select id="severity-filter">
+        <option value="">All Severities</option>
+        <option value="Class 1">Class 1 — High</option>
+        <option value="Class 2">Class 2 — Medium</option>
+        <option value="Class 3">Class 3 — Low</option>
+      </select>
+      <select id="category-filter">
+        <option value="">All Categories</option>
+      </select>
+      <button onclick="loadDashboard()" style="width:auto;padding:8px 18px;">Search</button>
+      <button onclick="clearFilters()" style="width:auto;padding:8px 18px;background:#666;">Clear</button>
+    </div>
+
+    <div id="dashboard-table">
+      <p class="loading">Loading recalls...</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+ // const API = "http://127.0.0.1:8000"; // Local
+    const API = "http://54.86.3.2:8000";
+
+  // ── Category counts ──────────────────────────────────────────
+  async function loadCategories() {
+    try {
+      const res = await fetch(`${API}/categories/counts`);
+      const data = await res.json();
+      const counts = data.category_counts;
+
+      const grid = document.getElementById("categories-grid");
+      const catSelect = document.getElementById("category-filter");
+      grid.innerHTML = "";
+
+      for (const [cat, count] of Object.entries(counts)) {
+        const label = document.createElement("label");
+        label.className = "cat-label";
+        label.innerHTML = `
+          <input type="checkbox" value="${cat}" />
+          ${cat}
+          <span class="cat-count ${count > 0 ? 'active' : ''}">${count}</span>
+        `;
+        grid.appendChild(label);
+
+        const opt = document.createElement("option");
+        opt.value = cat;
+        opt.textContent = cat;
+        catSelect.appendChild(opt);
+      }
+    } catch (e) {
+      document.getElementById("categories-grid").innerHTML =
+        "<p style='color:#999;font-size:0.85rem;'>Could not load categories.</p>";
+    }
+  }
+
+  // ── Subscribe ────────────────────────────────────────────────
+  async function subscribe() {
+    const email = document.getElementById("sub-email").value.trim();
+    const checked = [...document.querySelectorAll("#categories-grid input:checked")]
+      .map(el => el.value);
+    const msgEl = document.getElementById("sub-msg");
+    const btn = document.getElementById("subscribe-btn");
+
+    if (!email || !email.includes("@")) {
+      msgEl.className = "msg error";
+      msgEl.textContent = "Please enter a valid email address.";
+      return;
+    }
+
+    if (checked.length === 0) {
+      msgEl.className = "msg error";
+      msgEl.textContent = "Please select at least one category.";
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "Subscribing...";
+
+    try {
+      const res = await fetch(`${API}/subscribe`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, categories: checked })
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        msgEl.className = "msg success";
+        msgEl.textContent = data.message;
+      } else {
+        msgEl.className = "msg error";
+        msgEl.textContent = data.detail || "Subscription failed.";
+      }
+    } catch (e) {
+      msgEl.className = "msg error";
+      msgEl.textContent = "Could not connect to server.";
+    }
+
+    btn.disabled = false;
+    btn.textContent = "Subscribe";
+  }
+
+  // ── Dashboard ────────────────────────────────────────────────
+  async function loadDashboard() {
+    const search = document.getElementById("search-input").value.trim();
+    const severity = document.getElementById("severity-filter").value;
+    const category = document.getElementById("category-filter").value;
+
+    const params = new URLSearchParams();
+    if (search) params.append("search", search);
+    if (severity) params.append("severity", severity);
+    if (category) params.append("category", category);
+
+    const container = document.getElementById("dashboard-table");
+    container.innerHTML = "<p class='loading'>Loading...</p>";
+
+    try {
+      const res = await fetch(`${API}/recalls/dashboard?${params.toString()}`);
+      const data = await res.json();
+
+      if (!data.recalls || data.recalls.length === 0) {
+        container.innerHTML = "<p class='loading'>No recalls found.</p>";
+        return;
+      }
+
+      let html = `
+        <p style="font-size:0.85rem;color:#888;margin-bottom:12px;">
+          Showing ${data.total} recall(s)
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Severity</th>
+              <th>Category</th>
+              <th>Issue</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      for (const r of data.recalls) {
+        const severityLabel = {
+          "Class 1": "HIGH",
+          "Class 2": "MEDIUM",
+          "Class 3": "LOW"
+        }[r.recall_class] || "UNKNOWN";
+
+        html += `
+          <tr>
+            <td>
+              ${r.title}
+              ${r.ai_summary
+                ? `<div class="summary-text">${r.ai_summary}</div>`
+                : ""}
+            </td>
+            <td>
+              <span class="severity-badge ${severityLabel}">${severityLabel}</span>
+            </td>
+            <td>${r.food_category || "—"}</td>
+            <td>${r.issue || "—"}</td>
+            <td>${r.last_updated || "—"}</td>
+          </tr>
+        `;
+      }
+
+      html += "</tbody></table>";
+      container.innerHTML = html;
+
+    } catch (e) {
+      container.innerHTML = "<p class='loading'>Could not load recalls.</p>";
+    }
+  }
+
+  function clearFilters() {
+    document.getElementById("search-input").value = "";
+    document.getElementById("severity-filter").value = "";
+    document.getElementById("category-filter").value = "";
+    loadDashboard();
+  }
+
+  // ── Init ─────────────────────────────────────────────────────
+  loadCategories();
+  loadDashboard();
+</script>
+
+</body>
+</html>
