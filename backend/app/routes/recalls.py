@@ -1,10 +1,10 @@
-from app.email_service import send_recall_email
-
 import httpx
 from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import text
 from app.database import engine
+from app.email_service import send_recall_email
+from app.ai_service import generate_summary
 
 router = APIRouter()
 
@@ -78,7 +78,6 @@ async def sync_recalls():
 
     with engine.connect() as conn:
 
-        # fetch titles of recalls saved in last 30 days for repeat detection
         recent_titles = conn.execute(text("""
             SELECT title FROM recalls
             WHERE created_at >= NOW() - INTERVAL '30 days'
@@ -100,26 +99,29 @@ async def sync_recalls():
             if existing:
                 continue
 
-            # repeat recall check: first word of title is usually the brand
             first_word = title.lower().split()[0] if title else ""
             is_repeat = any(first_word in t for t in recent_titles)
 
+            summary = generate_summary(title, category)
+
             conn.execute(text("""
-                INSERT INTO recalls (recall_id, title, category, date_published, url)
-                VALUES (:recall_id, :title, :category, :date_published, :url)
+                INSERT INTO recalls (recall_id, title, category, date_published, url, ai_summary)
+                VALUES (:recall_id, :title, :category, :date_published, :url, :ai_summary)
             """), {
                 "recall_id": recall_id,
                 "title": title,
                 "category": category,
                 "date_published": date_published,
-                "url": url
+                "url": url,
+                "ai_summary": summary
             })
 
             new_recalls.append({
                 "recall_id": recall_id,
                 "title": title,
                 "category": category,
-                "is_repeat_recall": is_repeat
+                "is_repeat_recall": is_repeat,
+                "ai_summary": summary
             })
 
         conn.commit()

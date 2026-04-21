@@ -21,6 +21,7 @@ def create_tables():
                 category VARCHAR(10),
                 date_published BIGINT,
                 url TEXT,
+                ai_summary TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """))

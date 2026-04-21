@@ -19,12 +19,14 @@ def send_recall_email(recalls: list):
     body = "<h2>New Food Recalls Detected</h2>"
     for r in recalls:
         severity = {"1": "HIGH", "2": "MEDIUM", "3": "LOW"}.get(r["category"], "UNKNOWN")
-        repeat_warning = "<br><strong>⚠️ Repeat Recall</strong>" if r.get("is_repeat_recall") else ""
+        repeat_warning = "<br><strong>Repeat Recall</strong>" if r.get("is_repeat_recall") else ""
+        summary_block = f"<p><em>{r['ai_summary']}</em></p>" if r.get("ai_summary") else ""
         body += f"""
         <hr>
         <p><strong>{r['title']}</strong></p>
         <p>Severity: <strong>{severity}</strong></p>
         <p>Recall ID: {r['recall_id']}</p>
+        {summary_block}
         {repeat_warning}
         """
 
