@@ -6,6 +6,6 @@ food-recall-system/
 │   ├── app/                       
 │   ├── venv/               
 │   ├── .env                
-│   └── requirements.txt # --TODO   
+│   └── requirements.txt   
 ├── frontend/               # React Code
 │   ├── src/                
